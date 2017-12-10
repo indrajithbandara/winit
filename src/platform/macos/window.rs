@@ -254,6 +254,7 @@ impl Drop for WindowDelegate {
 #[derive(Clone, Default)]
 pub struct PlatformSpecificWindowBuilderAttributes {
     pub activation_policy: ActivationPolicy,
+    pub full_size_content: bool,
 }
 
 pub struct Window2 {
@@ -381,7 +382,7 @@ impl Window2 {
         }
     }
 
-    fn create_window(attrs: &WindowAttributes) -> Option<IdRef> {
+    fn create_window(attrs: &WindowAttributes, full_size_content: bool) -> Option<IdRef> {
         unsafe {
             let screen = match attrs.fullscreen {
                 Some(ref monitor_id) => {
@@ -417,7 +418,7 @@ impl Window2 {
                 }
             };
 
-            let masks = if screen.is_some() {
+            let mut masks = if screen.is_some() {
                 // Fullscreen window
                 NSWindowStyleMask::NSBorderlessWindowMask | NSWindowStyleMask::NSResizableWindowMask |
                     NSWindowStyleMask::NSTitledWindowMask
@@ -432,6 +433,10 @@ impl Window2 {
                     NSWindowStyleMask::NSFullSizeContentViewWindowMask
             };
 
+            if full_size_content {
+                masks |= appkit::NSFullSizeContentViewWindowMask;
+            }
+
             let window = IdRef::new(NSWindow::alloc(nil).initWithContentRect_styleMask_backing_defer_(
                 frame,
                 masks,
@@ -443,6 +448,11 @@ impl Window2 {
                 window.setReleasedWhenClosed_(NO);
                 window.setTitle_(*title);
                 window.setAcceptsMouseMovedEvents_(YES);
+
+                if full_size_content {
+                    window.setTitlebarAppearsTransparent_(YES);
+                    window.setTitleVisibility_(appkit::NSWindowTitleVisibility::NSWindowTitleHidden);
+                }
 
                 if !attrs.decorations {
                     window.setTitleVisibility_(appkit::NSWindowTitleVisibility::NSWindowTitleHidden);
