@@ -254,6 +254,7 @@ impl Drop for WindowDelegate {
 #[derive(Clone, Default)]
 pub struct PlatformSpecificWindowBuilderAttributes {
     pub activation_policy: ActivationPolicy,
+    pub full_size_content: bool,
 }
 
 pub struct Window {
@@ -312,7 +313,7 @@ impl Window {
             None      => { return Err(OsError(format!("Couldn't create NSApplication"))); },
         };
 
-        let window = match Window::create_window(win_attribs)
+        let window = match Window::create_window(win_attribs, pl_attribs.full_size_content)
         {
             Some(window) => window,
             None         => { return Err(OsError(format!("Couldn't create NSWindow"))); },
@@ -381,7 +382,7 @@ impl Window {
         }
     }
 
-    fn create_window(attrs: &WindowAttributes) -> Option<IdRef> {
+    fn create_window(attrs: &WindowAttributes, full_size_content: bool) -> Option<IdRef> {
         unsafe {
             let screen = match attrs.monitor {
                 Some(ref monitor_id) => {
@@ -420,7 +421,7 @@ impl Window {
                 }
             };
 
-            let masks = if screen.is_some() {
+            let mut masks = if screen.is_some() {
                 // Fullscreen window
                 appkit::NSBorderlessWindowMask | appkit::NSResizableWindowMask |
                     appkit::NSTitledWindowMask
@@ -435,6 +436,10 @@ impl Window {
                     appkit::NSFullSizeContentViewWindowMask
             };
 
+            if full_size_content {
+                masks |= appkit::NSFullSizeContentViewWindowMask;
+            }
+
             let window = IdRef::new(NSWindow::alloc(nil).initWithContentRect_styleMask_backing_defer_(
                 frame,
                 masks,
@@ -446,6 +451,11 @@ impl Window {
                 window.setReleasedWhenClosed_(NO);
                 window.setTitle_(*title);
                 window.setAcceptsMouseMovedEvents_(YES);
+
+                if full_size_content {
+                    window.setTitlebarAppearsTransparent_(YES);
+                    window.setTitleVisibility_(appkit::NSWindowTitleVisibility::NSWindowTitleHidden);
+                }
 
                 if !attrs.decorations {
                     window.setTitleVisibility_(appkit::NSWindowTitleVisibility::NSWindowTitleHidden);
