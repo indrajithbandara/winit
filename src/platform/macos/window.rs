@@ -313,7 +313,7 @@ impl Window2 {
             None      => { return Err(OsError(format!("Couldn't create NSApplication"))); },
         };
 
-        let window = match Window2::create_window(win_attribs)
+        let window = match Window2::create_window(win_attribs, pl_attribs.full_size_content)
         {
             Some(window) => window,
             None         => { return Err(OsError(format!("Couldn't create NSWindow"))); },

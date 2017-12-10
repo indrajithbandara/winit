@@ -75,7 +75,7 @@ impl WindowBuilderExt for WindowBuilder {
     }
 
     #[inline]
-    fn with_full_size_content(mut self, full_size_content) -> WindowBuilder {
+    fn with_full_size_content(mut self, full_size_content: bool) -> WindowBuilder {
         self.platform_specific.full_size_content = full_size_content;
         self
     }
