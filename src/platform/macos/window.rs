@@ -434,7 +434,7 @@ impl Window2 {
             };
 
             if full_size_content {
-                masks |= appkit::NSFullSizeContentViewWindowMask;
+                masks |= NSWindowStyleMask::NSFullSizeContentViewWindowMask;
             }
 
             let window = IdRef::new(NSWindow::alloc(nil).initWithContentRect_styleMask_backing_defer_(
